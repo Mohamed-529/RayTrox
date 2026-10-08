@@ -9,6 +9,7 @@ import {
   Globe2,
   Layers,
   LineChart,
+  Plug,
   RefreshCw,
   Search,
   ShieldAlert,
@@ -19,6 +20,8 @@ import {
   Wind,
   Zap,
 } from 'lucide-react';
+import { useHardware } from '../context/HardwareContext';
+
 
 export interface SolarNodeData {
   id: number;
@@ -115,16 +118,47 @@ export function DigitalTwinFleetMap() {
     return list;
   }, []);
 
+  const { isConnected, telemetry } = useHardware();
   const [nodes, setNodes] = useState<SolarNodeData[]>(initialNodes);
 
-  // Live simulation tick
+  // Sync real hardware telemetry into Node 1 when connected
+  useEffect(() => {
+    if (!isConnected) return;
+    setNodes((prev) =>
+      prev.map((node) => {
+        if (node.isPhysicalMaster) {
+          const v = telemetry.voltage;
+          const i = telemetry.current / 1000.0; // convert mA to A
+          const p = telemetry.power;
+          // Determine status based on live hardware values
+          const isFault = v < 1.0 && i < 0.05;
+          const isSoiled = v > 1.0 && v < 4.0;
+          return {
+            ...node,
+            voltage: Number(v.toFixed(1)),
+            current: Number(i.toFixed(2)),
+            power: Math.round(p * 1000) > 0 ? Math.round(p * 1000) : Math.round(v * i),
+            status: isFault ? 'fault' : isSoiled ? 'soiled' : 'nominal',
+            efficiency: Number(Math.min(100, Math.max(10, (v / 6.0) * 100)).toFixed(1)),
+          };
+        }
+        return node;
+      })
+    );
+  }, [isConnected, telemetry]);
+
+  // Live simulation tick for peers when autoSimulate is enabled
   useEffect(() => {
     if (!autoSimulate) return;
     const interval = setInterval(() => {
       setNodes((prev) =>
         prev.map((node) => {
+          if (node.isPhysicalMaster && isConnected) {
+            // Keep real hardware data, do not overwrite with simulated jitter
+            return node;
+          }
           if (node.isPhysicalMaster) {
-            // Live micro-jitter on master hardware node
+            // Simulated micro-jitter when physical hardware is not connected
             const jitterV = Number((38.4 + (Math.random() - 0.5) * 0.4).toFixed(1));
             const jitterI = Number((10.5 + (Math.random() - 0.5) * 0.3).toFixed(1));
             return {
@@ -139,7 +173,8 @@ export function DigitalTwinFleetMap() {
       );
     }, 2000);
     return () => clearInterval(interval);
-  }, [autoSimulate]);
+  }, [autoSimulate, isConnected]);
+
 
   // Selected node details
   const selectedNode = nodes.find((n) => n.id === selectedNodeId) || nodes[0];

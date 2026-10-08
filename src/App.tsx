@@ -48,10 +48,14 @@ import { InteractiveRoiCalculator } from './components/InteractiveRoiCalculator'
 import { PitchDeckView } from './components/PitchDeckView';
 import { PytestRunnerView } from './components/PytestRunnerView';
 import { HardwareVideoSimulator } from './components/HardwareVideoSimulator';
+import { HardwareWorkbenchModal } from './components/HardwareWorkbenchModal';
+import { useHardware } from './context/HardwareContext';
 
 export type GridScenario = 'default' | 'smog' | 'fault' | 'satellite' | 'thermal' | 'cloud';
 
 export default function App() {
+  const { isConnected, telemetry } = useHardware();
+
   const [scenario, setScenario] = useState<GridScenario>('default');
   const [sunHour, setSunHour] = useState<number>(12); // Daytime scrubbing slider in Act I (6 AM to 6 PM)
   const [activeFormulaVar, setActiveFormulaVar] = useState<string>('delta');
@@ -70,11 +74,18 @@ export default function App() {
   const [showRegionDropdown, setShowRegionDropdown] = useState<boolean>(false);
   const [showGatewayModal, setShowGatewayModal] = useState<boolean>(false);
 
-  // Dynamic values based on scenario
-  const targetLossPct = scenario === 'fault' ? 81.0 : scenario === 'smog' ? 79.3 : 4.8;
+  // Dynamic values based on scenario (or live physical hardware when connected)
+  const targetLossPct = isConnected
+    ? Number(Math.max(0, 100 - (telemetry.voltage / 6.0) * 100).toFixed(1))
+    : scenario === 'fault'
+    ? 81.0
+    : scenario === 'smog'
+    ? 79.3
+    : 4.8;
   const meanNeighborLoss = scenario === 'smog' ? 77.2 : 5.1;
   const varianceDrift = Number(Math.abs(targetLossPct - meanNeighborLoss).toFixed(1));
   const isIsolatedFault = varianceDrift > 12.0;
+
 
   const handleTriggerScenario = (newScenario: GridScenario) => {
     setScenario(newScenario);
@@ -122,6 +133,16 @@ export default function App() {
           {/* Right: Clean, ultra-minimalist single-row monospace navigation (Zero background padding boxes) */}
           <nav className="flex items-center gap-6 sm:gap-8 text-xs font-mono tracking-wider">
             <button
+              onClick={() => setShowHardwareModal(true)}
+              className={`transition-colors cursor-pointer p-0 bg-transparent border-0 flex items-center gap-1.5 ${
+                isConnected ? 'text-[#00ff88] font-bold' : 'text-slate-400 hover:text-cyan-300'
+              }`}
+            >
+              <span className={`w-2 h-2 rounded-full ${isConnected ? 'bg-[#00ff88] animate-pulse' : 'bg-slate-500'}`} />
+              <span>[ {isConnected ? `ESP32 LIVE: ${telemetry.voltage.toFixed(1)}V` : 'ESP32 Bench Setup'} ]</span>
+            </button>
+
+            <button
               onClick={() => scrollTo('digital-twin-fleet')}
               className="text-slate-400 hover:text-white transition-colors cursor-pointer p-0 bg-transparent border-0"
             >
@@ -141,7 +162,9 @@ export default function App() {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#00ff88] opacity-75" />
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-[#00ff88] shadow-[0_0_8px_#00ff88]" />
               </span>
-              <span className="text-[#00ff88] font-medium">[ System State: Connected ]</span>
+              <span className="text-[#00ff88] font-medium">
+                [ {isConnected ? 'Physical Serial Stream' : 'System State: Connected'} ]
+              </span>
             </div>
           </nav>
         </header>
@@ -807,21 +830,10 @@ export default function App() {
       )}
 
       {showHardwareModal && (
-        <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-[#0B0F19] border border-cyan-500/60 rounded-3xl max-w-4xl w-full max-h-[92vh] overflow-y-auto p-6 sm:p-8 space-y-6 shadow-2xl font-mono text-xs">
-            <div className="flex justify-between items-center pb-3 border-b border-slate-800">
-              <h2 className="text-xl font-bold text-white">Physical Hardware Lab Architecture</h2>
-              <button onClick={() => setShowHardwareModal(false)} className="text-slate-400 hover:text-white text-sm cursor-pointer">
-                ✕ Close
-              </button>
-            </div>
-            <div className="space-y-4 text-slate-300 font-sans text-xs">
-              <p>• ESP32 Microcontroller: I2C pins GPIO 21 (SDA) and GPIO 22 (SCL) read INA219 register.</p>
-              <p>• INA219 High-Side Current Shunt: Reads bus voltage up to 26V and shunt current up to 3.2A.</p>
-              <p>• 5V Relay Actuator: GPIO 18 switches 12V submersible DC cleaning water pump.</p>
-            </div>
-          </div>
-        </div>
+        <HardwareWorkbenchModal
+          onClose={() => setShowHardwareModal(false)}
+          onOpenAwsSection={() => setShowAwsModal(true)}
+        />
       )}
 
       {showPanelTypesModal && (

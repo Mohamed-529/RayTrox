@@ -1,16 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { AlertCircle, Flame, PhoneCall, Power, ShieldAlert, Terminal, Zap } from 'lucide-react';
+import { AlertCircle, Flame, PhoneCall, Plug, Power, ShieldAlert, Terminal, Zap } from 'lucide-react';
+import { useHardware } from '../context/HardwareContext';
 
 interface Props {
   scenario: string;
 }
 
 export function BareMetalScadaTerminal({ scenario }: Props) {
+  const { isConnected, telemetry, toggleActuator, sendSerialCommand } = useHardware();
   const [eStop, setEStop] = useState<boolean>(false);
   const [forceRelay, setForceRelay] = useState<boolean>(false);
   const [thermalBypass, setThermalBypass] = useState<boolean>(false);
   const [voiceLink, setVoiceLink] = useState<boolean>(true);
   const [tick, setTick] = useState<number>(0);
+
 
   useEffect(() => {
     const id = setInterval(() => setTick((t) => (t + 1) % 100), 200);
@@ -33,7 +36,13 @@ export function BareMetalScadaTerminal({ scenario }: Props) {
             </span>
           </div>
           <div className="text-xs text-emerald-600">
-            BARE-METAL HARDWARE DIRECTORY · ESP32 GPIO REGISTER MAPPING · I2C ADDR: 0x40
+            {isConnected ? (
+              <span className="text-emerald-300 font-bold">
+                ● LIVE ESP32 HARDWARE STREAM: {telemetry.voltage.toFixed(2)}V · {telemetry.current.toFixed(1)}mA · {telemetry.power.toFixed(2)}W · ACTUATOR: {telemetry.actuatorState ? 'HIGH' : 'LOW'}
+              </span>
+            ) : (
+              'BARE-METAL HARDWARE DIRECTORY · ESP32 GPIO REGISTER MAPPING · I2C ADDR: 0x40'
+            )}
           </div>
         </div>
 
@@ -41,7 +50,9 @@ export function BareMetalScadaTerminal({ scenario }: Props) {
         <div className="flex items-center gap-3 text-xs bg-black/80 px-4 py-2 rounded-lg border border-[#14331C] text-emerald-500">
           <span>MEM: 0x7FFF{tick < 10 ? `0${tick}` : tick}</span>
           <span className="text-emerald-700">|</span>
-          <span className="text-emerald-300 animate-pulse">UART 115200 BAUD</span>
+          <span className={`animate-pulse ${isConnected ? 'text-emerald-300 font-bold' : 'text-emerald-500'}`}>
+            {isConnected ? 'USB SERIAL SYNCED' : 'UART 115200 BAUD'}
+          </span>
         </div>
       </div>
 
@@ -51,8 +62,8 @@ export function BareMetalScadaTerminal({ scenario }: Props) {
         <div className="lg:col-span-7 space-y-4">
           <div className="p-4 rounded-xl bg-black border-2 border-[#14331C] space-y-3">
             <div className="flex justify-between text-[11px] text-emerald-500 uppercase font-bold">
-              <span>CH1: AC VOLTAGE SINE WAVE (230V / 50Hz)</span>
-              <span>CH2: SHUNT CURRENT RIPPLE</span>
+              <span>{isConnected ? `CH1: SOLAR VOLTAGE (${telemetry.voltage.toFixed(2)}V)` : 'CH1: AC VOLTAGE SINE WAVE (230V / 50Hz)'}</span>
+              <span>{isConnected ? `CH2: INA219 CURRENT (${telemetry.current.toFixed(1)}mA)` : 'CH2: SHUNT CURRENT RIPPLE'}</span>
             </div>
 
             {/* SVG Oscilloscope Grid with Animated Waveform */}
@@ -64,7 +75,11 @@ export function BareMetalScadaTerminal({ scenario }: Props) {
               <svg viewBox="0 0 600 120" className="w-full h-full relative z-10">
                 {/* Sine wave for voltage */}
                 <path
-                  d={`M 0 60 Q 75 ${20 + Math.sin(tick) * 5}, 150 60 T 300 60 T 450 60 T 600 60`}
+                  d={`M 0 60 Q 75 ${
+                    isConnected
+                      ? Math.max(15, 60 - (telemetry.voltage / 6.0) * 45 + Math.sin(tick) * 2)
+                      : 20 + Math.sin(tick) * 5
+                  }, 150 60 T 300 60 T 450 60 T 600 60`}
                   fill="none"
                   stroke="#10B981"
                   strokeWidth="2.5"
@@ -72,9 +87,25 @@ export function BareMetalScadaTerminal({ scenario }: Props) {
                 />
                 {/* Current ripple wave */}
                 <path
-                  d={`M 0 60 Q 75 ${scenario === 'fault' ? 80 : 40}, 150 60 T 300 60 T 450 60 T 600 60`}
+                  d={`M 0 60 Q 75 ${
+                    isConnected
+                      ? telemetry.current < 15
+                        ? 85
+                        : Math.max(25, 60 - (telemetry.current / 300.0) * 35)
+                      : scenario === 'fault'
+                      ? 80
+                      : 40
+                  }, 150 60 T 300 60 T 450 60 T 600 60`}
                   fill="none"
-                  stroke={scenario === 'fault' ? '#F43F5E' : '#06B6D4'}
+                  stroke={
+                    isConnected
+                      ? telemetry.current < 15
+                        ? '#F43F5E'
+                        : '#06B6D4'
+                      : scenario === 'fault'
+                      ? '#F43F5E'
+                      : '#06B6D4'
+                  }
                   strokeWidth="1.5"
                   strokeDasharray="4 2"
                 />
@@ -83,7 +114,9 @@ export function BareMetalScadaTerminal({ scenario }: Props) {
 
             <div className="flex justify-between text-[10px] text-emerald-600">
               <span>TIMEBASE: 2.5ms/DIV</span>
-              <span className="text-emerald-400 font-bold">INA219 16-BIT ADC BUFFER: OK</span>
+              <span className="text-emerald-400 font-bold">
+                {isConnected ? 'LIVE INA219 16-BIT ADC STREAM: LOCKED' : 'INA219 16-BIT ADC BUFFER: OK'}
+              </span>
             </div>
           </div>
         </div>
@@ -97,7 +130,11 @@ export function BareMetalScadaTerminal({ scenario }: Props) {
           <div className="grid grid-cols-2 gap-3 text-xs">
             {/* Toggle 1: E-STOP */}
             <button
-              onClick={() => setEStop(!eStop)}
+              onClick={() => {
+                const next = !eStop;
+                setEStop(next);
+                if (next) sendSerialCommand('ESTOP');
+              }}
               className={`p-4 rounded-xl border-2 font-black transition-all cursor-pointer flex flex-col items-center gap-2 ${
                 eStop
                   ? 'bg-rose-950 border-rose-500 text-rose-300 shadow-lg shadow-rose-500/50'
@@ -111,17 +148,24 @@ export function BareMetalScadaTerminal({ scenario }: Props) {
 
             {/* Toggle 2: 5V Sprinkler Relay */}
             <button
-              onClick={() => setForceRelay(!forceRelay)}
+              onClick={() => {
+                const next = !forceRelay;
+                setForceRelay(next);
+                toggleActuator(next);
+              }}
               className={`p-4 rounded-xl border-2 font-black transition-all cursor-pointer flex flex-col items-center gap-2 ${
-                isRelayActive
+                (isConnected ? telemetry.actuatorState : isRelayActive)
                   ? 'bg-amber-950 border-amber-500 text-amber-300 shadow-lg shadow-amber-500/50'
                   : 'bg-black border-[#14331C] text-emerald-400 hover:border-emerald-600'
               }`}
             >
               <Zap className="w-5 h-5" />
               <span>5V RELAY GPIO 18</span>
-              <span className="text-[9px] opacity-75">{isRelayActive ? 'HIGH (PUMP RUNNING)' : 'LOW (STANDBY)'}</span>
+              <span className="text-[9px] opacity-75">
+                {(isConnected ? telemetry.actuatorState : isRelayActive) ? 'HIGH (PHYSICAL LED/PUMP ON)' : 'LOW (STANDBY)'}
+              </span>
             </button>
+
 
             {/* Toggle 3: Thermal Bypass */}
             <button
