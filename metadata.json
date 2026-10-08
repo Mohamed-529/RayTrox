@@ -1,0 +1,6 @@
+{
+  "name": "GridPulse: Spatial Consensus Solar Engine",
+  "description": "Municipal solar telemetry platform utilizing spatial consensus algorithms on AWS to isolate urban smog drops from hardware inverter failures, eliminating false diesel maintenance dispatches.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,110 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: #F8FAFC;
+    background-color: #030509;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+  }
+
+  code, pre, .font-mono {
+    font-family: 'JetBrains Mono', monospace;
+    font-feature-settings: "tnum" 1;
+  }
+}
+
+/* Custom text stroke for giant editorial typographic moments */
+.text-stroke-white {
+  -webkit-text-stroke: 1.5px rgba(255, 255, 255, 0.8);
+  color: transparent;
+}
+
+.text-stroke-cyan {
+  -webkit-text-stroke: 1.5px rgba(6, 182, 212, 0.8);
+  color: transparent;
+}
+
+.text-stroke-emerald {
+  -webkit-text-stroke: 2px rgba(16, 185, 129, 0.8);
+  color: transparent;
+}
+
+.text-stroke-rose {
+  -webkit-text-stroke: 2px rgba(244, 63, 94, 0.8);
+  color: transparent;
+}
+
+/* Scanline effect for SCADA terminal */
+.scanlines {
+  background: linear-gradient(
+    rgba(18, 16, 16, 0) 50%, 
+    rgba(0, 0, 0, 0.35) 50%
+  ), linear-gradient(
+    90deg,
+    rgba(255, 0, 0, 0.04),
+    rgba(0, 255, 0, 0.02),
+    rgba(0, 0, 255, 0.04)
+  );
+  background-size: 100% 4px, 6px 100%;
+}
+
+.glow-cyan {
+  box-shadow: 0 0 35px -3px rgba(6, 182, 212, 0.5), 0 0 15px -2px rgba(6, 182, 212, 0.35);
+}
+
+.glow-amber {
+  box-shadow: 0 0 35px -3px rgba(245, 158, 11, 0.5), 0 0 15px -2px rgba(245, 158, 11, 0.35);
+}
+
+.glow-red {
+  box-shadow: 0 0 35px -3px rgba(239, 68, 68, 0.55), 0 0 15px -2px rgba(239, 68, 68, 0.4);
+}
+
+.glow-emerald {
+  box-shadow: 0 0 35px -3px rgba(16, 185, 129, 0.55), 0 0 15px -2px rgba(16, 185, 129, 0.4);
+}
+
+/* Custom scrollbar for horizontal scenes */
+::-webkit-scrollbar {
+  height: 6px;
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #060913;
+}
+::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #06b6d4;
+}
+
+/* Looping laser scan line animation overlay for physical asset twin */
+@keyframes laserScan {
+  0% {
+    top: 0%;
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    top: 100%;
+    opacity: 0.8;
+  }
+}
+
+.laser-scan-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent 0%, rgba(0, 242, 254, 0.4) 20%, #00f2fe 50%, rgba(0, 255, 136, 0.4) 80%, transparent 100%);
+  box-shadow: 0 0 12px 2px rgba(0, 242, 254, 0.7), 0 0 4px 1px rgba(0, 255, 136, 0.5);
+  animation: laserScan 4.5s ease-in-out infinite alternate;
+  pointer-events: none;
+}

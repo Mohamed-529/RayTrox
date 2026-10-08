@@ -1,0 +1,49 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: GridPulse Core Spatial Consensus Engine Serverless Infrastructure Stack
+
+Globals:
+  Function:
+    Timeout: 15
+    MemorySize: 512
+    Runtime: python3.11
+    Environment:
+      Variables:
+        STAGE: production
+        ENGINE_VERSION: "2026.10.03"
+        VARIANCE_TOLERANCE: "12.0"
+        TIMESTREAM_DATABASE: "GridPulseDB"
+        TIMESTREAM_TABLE: "InverterTelemetry"
+
+Resources:
+  SpatialConsensusLambdaRouter:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: app.grid_pulse.lambda_handler
+      CodeUri: ./
+      Description: Ingests inverter telemetry, queries Amazon Timestream rolling spatial windows, and routes consensus verdicts.
+      Policies:
+        - AmazonTimestreamFullAccess
+        - AWSStepFunctionsFullAccess
+        - AmazonBedrockFullAccess
+      Events:
+        ProxyApiIngress:
+          Type: Api
+          Properties:
+            Path: /{proxy+}
+            Method: ANY
+        TelemetryIngress:
+          Type: Api
+          Properties:
+            Path: /api/v1/grid/telemetry
+            Method: POST
+        HealthCheck:
+          Type: Api
+          Properties:
+            Path: /health
+            Method: GET
+
+Outputs:
+  GridPulseApiEndpoint:
+    Description: "API Gateway endpoint URL for Prod environment for GridPulse Core Ingress"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
