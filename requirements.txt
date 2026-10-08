@@ -1,0 +1,22 @@
+# GridPulse - Python Backend & Hardware Tooling Dependencies
+
+# Core Web Framework & API Server
+fastapi>=0.110.0
+uvicorn[standard]>=0.28.0
+pydantic>=2.6.0
+
+# Hardware & Serial Communications
+pyserial>=3.5
+requests>=2.31.0
+
+# Numerical Processing & Environmental Physics
+numpy>=1.26.0
+
+# Cloud SDK & AWS Timestream / Lambda Runtime
+boto3>=1.34.0
+botocore>=1.34.0
+
+# Testing & Verification Framework
+pytest>=8.0.0
+httpx>=0.27.0
+pytest-asyncio>=0.23.0

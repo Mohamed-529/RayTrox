@@ -261,6 +261,29 @@ export const HardwareWorkbenchModal: React.FC<Props> = ({ onClose, onOpenAwsSect
                 </div>
               </div>
 
+              {/* Soldering & Pin Header Fix Callout */}
+              <div className="p-4 rounded-2xl bg-amber-950/30 border border-amber-500/40 text-amber-200 space-y-2">
+                <div className="flex items-center gap-2 text-sm font-bold text-amber-300">
+                  <Wrench className="w-4 h-4 text-amber-400" />
+                  <span>INA219 Soldering Guide (6 Pins Total)</span>
+                </div>
+                <p className="text-xs text-slate-300">
+                  INA219 boards arrive with loose 6-pin male strip headers. Because jumper wire sockets cannot grip bare holes, solder the 6 male pins (VCC, GND, SCL, SDA, Vin-, Vin+) once. 
+                  ESP32 DevKit already comes with factory pre-soldered pins, so <strong>only 6 solder joints on the INA219</strong> are required for the entire project!
+                </p>
+                <div className="flex flex-wrap gap-2 pt-1 text-[11px] font-mono">
+                  <span className="px-2.5 py-1 rounded-md bg-amber-900/60 border border-amber-600/50 text-amber-200">
+                    ⚡ Total Soldering Joints: 6 pins on INA219
+                  </span>
+                  <span className="px-2.5 py-1 rounded-md bg-blue-900/60 border border-blue-600/50 text-blue-200">
+                    🔌 Jumper Wires: 4 F-to-F (I2C) + 2 F-to-M (LED)
+                  </span>
+                  <span className="px-2.5 py-1 rounded-md bg-emerald-900/60 border border-emerald-600/50 text-emerald-200">
+                    ✓ ESP32: Pre-soldered factory pins
+                  </span>
+                </div>
+              </div>
+
               {/* Pin Mapping Matrix */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Table 1: ESP32 to INA219 */}

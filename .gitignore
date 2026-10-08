@@ -1,3 +1,4 @@
+# Node / Frontend
 node_modules/
 build/
 dist/
@@ -6,3 +7,23 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.coverage
+htmlcov/
+.venv/
+env/
+venv/
+ENV/
+*.egg-info/
+
+# Hardware / IDE
+.vscode/
+.idea/
+*.ino.hex
+*.ino.elf
