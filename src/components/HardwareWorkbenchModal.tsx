@@ -566,7 +566,7 @@ export const HardwareWorkbenchModal: React.FC<Props> = ({
                     <strong className="text-xl text-cyan-400 block tabular-nums">
                       {telemetry.voltage.toFixed(2)} V
                     </strong>
-                    <span className="text-[10px] text-slate-500">Target Range: 0–6.0V</span>
+                    <span className="text-[10px] text-slate-500">Panel Range: 0–12.0V (Voc 11.1V)</span>
                   </div>
 
                   <div className="p-4 rounded-xl bg-black border border-slate-800 space-y-1">
