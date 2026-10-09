@@ -130,16 +130,19 @@ export default function App() {
             </span>
           </div>
 
-          {/* Right: Clean, ultra-minimalist single-row monospace navigation (Zero background padding boxes) */}
-          <nav className="flex items-center gap-6 sm:gap-8 text-xs font-mono tracking-wider">
+          {/* Right: Clean, ultra-minimalist single-row monospace navigation */}
+          <nav className="flex items-center gap-4 sm:gap-6 text-xs font-mono tracking-wider">
             <button
               onClick={() => setShowHardwareModal(true)}
-              className={`transition-colors cursor-pointer p-0 bg-transparent border-0 flex items-center gap-1.5 ${
-                isConnected ? 'text-[#00ff88] font-bold' : 'text-slate-400 hover:text-cyan-300'
+              className={`transition-all cursor-pointer px-3.5 py-1.5 rounded-lg border flex items-center gap-2 ${
+                isConnected
+                  ? 'bg-emerald-950/80 border-[#00ff88] text-[#00ff88] font-bold shadow-[0_0_15px_rgba(0,255,136,0.3)] animate-pulse'
+                  : 'bg-cyan-950/80 border-cyan-400/80 text-cyan-300 hover:bg-cyan-900/90 hover:text-white shadow-[0_0_15px_rgba(6,182,212,0.35)]'
               }`}
             >
-              <span className={`w-2 h-2 rounded-full ${isConnected ? 'bg-[#00ff88] animate-pulse' : 'bg-slate-500'}`} />
-              <span>[ {isConnected ? `ESP32 LIVE: ${telemetry.voltage.toFixed(1)}V` : 'ESP32 Bench Setup'} ]</span>
+              <Cpu className="w-3.5 h-3.5 text-cyan-300" />
+              <span className={`w-2 h-2 rounded-full ${isConnected ? 'bg-[#00ff88] animate-pulse' : 'bg-cyan-400'}`} />
+              <span className="font-bold">{isConnected ? `ESP32 LIVE: ${telemetry.voltage.toFixed(1)}V` : '⚡ Connect Hardware / Serial'}</span>
             </button>
 
             <button
@@ -193,10 +196,18 @@ export default function App() {
             {/* Controlled Action Group */}
             <div className="flex flex-wrap items-center gap-4 pt-1">
               <button
+                onClick={() => setShowHardwareModal(true)}
+                className="px-6 py-3.5 rounded-lg bg-gradient-to-r from-cyan-400 via-teal-400 to-[#00ff88] hover:from-cyan-300 hover:to-emerald-400 text-slate-950 font-bold text-xs tracking-wider uppercase transition-all shadow-[0_0_25px_rgba(6,182,212,0.45)] flex items-center gap-2 cursor-pointer group"
+              >
+                <Cpu className="w-4 h-4 text-slate-950" />
+                <span>⚡ Hardware Workbench (Connect ESP32 / Serial)</span>
+              </button>
+
+              <button
                 onClick={() => scrollTo('failure-timeline')}
                 className="px-6 py-3.5 rounded-lg bg-[#F8FAFC] hover:bg-white text-[#0A0E17] font-semibold text-xs tracking-wider uppercase transition-all shadow-lg shadow-black/40 flex items-center gap-2 cursor-pointer group"
               >
-                <span>Explore the Architecture</span>
+                <span>Explore Architecture</span>
                 <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
               </button>
 
@@ -884,6 +895,27 @@ export default function App() {
           </div>
         </div>
       )}
+
+      {/* Floating Quick-Access Button for Hardware Workbench / Connect ESP32 */}
+      <div className="fixed bottom-6 right-6 z-40">
+        <button
+          onClick={() => setShowHardwareModal(true)}
+          className={`flex items-center gap-2.5 px-4 py-3 rounded-2xl shadow-2xl backdrop-blur-md border transition-all cursor-pointer ${
+            isConnected
+              ? 'bg-emerald-950/95 border-[#00ff88] text-[#00ff88] shadow-[0_0_25px_rgba(0,255,136,0.5)]'
+              : 'bg-[#091526]/95 border-cyan-400 text-cyan-300 hover:bg-cyan-950 hover:text-white shadow-[0_0_25px_rgba(6,182,212,0.4)] animate-bounce'
+          }`}
+        >
+          <div className="w-2.5 h-2.5 rounded-full relative flex items-center justify-center">
+            <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${isConnected ? 'bg-[#00ff88]' : 'bg-cyan-400'} opacity-75`} />
+            <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${isConnected ? 'bg-[#00ff88]' : 'bg-cyan-400'}`} />
+          </div>
+          <Cpu className="w-4 h-4 text-cyan-300" />
+          <span className="text-xs font-mono font-bold tracking-wide">
+            {isConnected ? `ESP32 LIVE: ${telemetry.voltage.toFixed(1)}V` : '⚡ Connect Hardware / Serial'}
+          </span>
+        </button>
+      </div>
     </div>
   );
 }

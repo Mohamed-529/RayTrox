@@ -28,6 +28,7 @@ import { useHardware } from '../context/HardwareContext';
 interface Props {
   onClose: () => void;
   onOpenAwsSection?: () => void;
+  initialStep?: 'wiring' | 'code' | 'test' | 'aws';
 }
 
 export const ARDUINO_FIRMWARE_SKETCH = `/*
@@ -120,7 +121,11 @@ void loop() {
 }
 `;
 
-export const HardwareWorkbenchModal: React.FC<Props> = ({ onClose, onOpenAwsSection }) => {
+export const HardwareWorkbenchModal: React.FC<Props> = ({
+  onClose,
+  onOpenAwsSection,
+  initialStep = 'test',
+}) => {
   const {
     isConnected,
     isConnecting,
@@ -135,7 +140,7 @@ export const HardwareWorkbenchModal: React.FC<Props> = ({ onClose, onOpenAwsSect
     isWebSerialSupported,
   } = useHardware();
 
-  const [activeStep, setActiveStep] = useState<'wiring' | 'code' | 'test' | 'aws'>('wiring');
+  const [activeStep, setActiveStep] = useState<'wiring' | 'code' | 'test' | 'aws'>(initialStep);
   const [copiedCode, setCopiedCode] = useState(false);
 
   const handleCopyCode = () => {
@@ -518,9 +523,39 @@ export const HardwareWorkbenchModal: React.FC<Props> = ({ onClose, onOpenAwsSect
                 )}
 
                 {error && (
-                  <div className="p-3.5 rounded-xl bg-rose-950/60 border border-rose-500/60 text-rose-300 flex items-center gap-2">
-                    <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                    <span>{error}</span>
+                  <div className="p-4 rounded-xl bg-amber-950/80 border-2 border-amber-500/80 text-amber-200 space-y-3 font-mono text-xs">
+                    <div className="flex items-start gap-2.5">
+                      <AlertCircle className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
+                      <div className="space-y-1">
+                        <strong className="text-white text-sm block">
+                          {error.includes('permissions policy') || error.includes('disallowed')
+                            ? 'Browser Security: Serial Port blocked inside Preview Frame'
+                            : 'Serial Connection Notice'}
+                        </strong>
+                        <p className="text-amber-200/90 text-xs leading-relaxed">
+                          {error.includes('permissions policy') || error.includes('disallowed')
+                            ? 'Google Chrome blocks USB Serial access inside an embedded iframe preview. You must open this web app in a direct browser tab (top-level window) for Chrome to grant USB/COM Port access!'
+                            : error}
+                        </p>
+                      </div>
+                    </div>
+
+                    {(error.includes('permissions policy') || error.includes('disallowed')) && (
+                      <div className="pt-2 border-t border-amber-800/60 flex flex-wrap items-center gap-3">
+                        <a
+                          href={window.location.href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-4 py-2 rounded-lg bg-amber-400 hover:bg-amber-300 text-black font-bold flex items-center gap-2 cursor-pointer transition-colors shadow-md"
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                          <span>Open in New Browser Tab (Direct URL)</span>
+                        </a>
+                        <span className="text-[11px] text-amber-300/80">
+                          (Once opened in the new tab, click "Connect ESP32" and Chrome will show the COM port popup!)
+                        </span>
+                      </div>
+                    )}
                   </div>
                 )}
 

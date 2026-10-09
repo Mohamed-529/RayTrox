@@ -59,23 +59,37 @@ export const HardwareProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     if (!trimmed) return;
 
     try {
-      // Expected format: {"v": 5.82, "i": 180.4, "p": 1.05, "actuator": 0}
+      // Expected format: {"device_id":"PHYSICAL-PANEL-01", ...} OR {"v": 5.82, "i": 180.4, "p": 1.05}
       if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
         const data = JSON.parse(trimmed);
-        const v = typeof data.v === 'number' ? Number(data.v.toFixed(2)) : 0;
-        const i = typeof data.i === 'number' ? Number(data.i.toFixed(1)) : 0;
-        const p = typeof data.p === 'number' ? Number(data.p.toFixed(2)) : Number(((v * i) / 1000).toFixed(2));
+        
+        let v = 0;
+        let i = 0;
+        let p = 0;
+
+        if (data.voltage_v !== undefined) {
+          v = typeof data.voltage_v === 'number' ? data.voltage_v : parseFloat(data.voltage_v) || 0;
+          const curA = typeof data.current_a === 'number' ? data.current_a : parseFloat(data.current_a) || 0;
+          i = curA * 1000; // convert to mA
+          const kw = typeof data.actual_output_kw === 'number' ? data.actual_output_kw : parseFloat(data.actual_output_kw) || 0;
+          p = kw > 0 ? kw * 1000 : (v * i) / 1000;
+        } else {
+          v = typeof data.v === 'number' ? Number(data.v.toFixed(2)) : parseFloat(data.v) || 0;
+          i = typeof data.i === 'number' ? Number(data.i.toFixed(1)) : parseFloat(data.i) || 0;
+          p = typeof data.p === 'number' ? Number(data.p.toFixed(2)) : Number(((v * i) / 1000).toFixed(2));
+        }
+
         const act = data.actuator === 1 || data.actuator === true;
 
         setTelemetry({
-          voltage: v,
-          current: i,
-          power: p,
+          voltage: Number(v.toFixed(2)),
+          current: Number(i.toFixed(1)),
+          power: Number(p.toFixed(2)),
           actuatorState: act,
           timestamp: Date.now(),
           rawString: trimmed,
         });
-        appendLog(`RX: V=${v}V | I=${i}mA | P=${p}W | ACT=${act ? 'ON' : 'OFF'}`);
+        appendLog(`RX: V=${v.toFixed(2)}V | I=${i.toFixed(1)}mA | P=${p.toFixed(2)}W | DEVICE=${data.device_id || 'ESP32'}`);
       } else {
         appendLog(`RAW: ${trimmed}`);
       }
